@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace PetStore.Logic
 {
-    internal static class ListExtensions
+    public static class ListExtensions
     {
         public static List<T> InStock<T>(this List<T> list) where T : Product
         {

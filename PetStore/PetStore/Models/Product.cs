@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace PetStore.Models
 {
-    internal class Product
+    public class Product
     {
         public decimal Price { get; set; }
 

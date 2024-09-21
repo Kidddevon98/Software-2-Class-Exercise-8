@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace PetStore.Models
 {
-    internal class CatFood : Product
+    public class CatFood : Product
     {
         public bool KittenFood { get; set; }
 

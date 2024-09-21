@@ -5,55 +5,70 @@ using PetStore.Logic;
 using PetStore.Models;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using FluentValidation;
+using FluentValidation.Results;
+using PetStore.Validators;
+
 
 var services = CreateServiceCollection();
-
 var productLogic = services.GetService<IProductLogic>();
 
 string userInput = DisplayMenuAndGetInput();
 
-while (userInput.ToLower() != "exit")
+while (userInput?.ToLower() != "exit")
 {
     if (userInput == "1")
     {
-        var dogLeash = new DogLeash();
+        Console.WriteLine("Enter the product details as JSON:");
 
-        Console.WriteLine("Creating a dog leash...");
+        string jsonInput = Console.ReadLine();
 
-        Console.Write("Enter the material the leash is made out of: ");
-        dogLeash.Material = Console.ReadLine();
+        try
+        {
+            var dogLeash = JsonSerializer.Deserialize<DogLeash>(jsonInput);
 
-        Console.Write("Enter the length in inches: ");
-        dogLeash.LengthInches = int.Parse(Console.ReadLine());
+            if (dogLeash != null)
+            {
+                // Validate the input using FluentValidation
+                DogLeashValidator validator = new DogLeashValidator();
+                ValidationResult results = validator.Validate(dogLeash);
 
-        Console.Write("Enter the name of the leash: ");
-        dogLeash.Name = Console.ReadLine();
-
-        Console.Write("Give the product a short description: ");
-        dogLeash.Description = Console.ReadLine();
-
-        Console.Write("Give the product a price: ");
-        dogLeash.Price = decimal.Parse(Console.ReadLine());
-
-        Console.Write("How many products do you have on hand? ");
-        dogLeash.Quantity = int.Parse(Console.ReadLine());
-
-        productLogic.AddProduct(dogLeash);
-        Console.WriteLine("Added a dog leash");
+                if (results.IsValid)
+                {
+                    productLogic?.AddProduct(dogLeash);
+                    Console.WriteLine("Added a dog leash");
+                }
+                else
+                {
+                    foreach (var failure in results.Errors)
+                    {
+                        Console.WriteLine($"Property {failure.PropertyName} failed validation. Error: {failure.ErrorMessage}");
+                    }
+                }
+            }
+        }
+        catch (JsonException ex)
+        {
+            Console.WriteLine("Failed to deserialize JSON input. Please make sure the format is correct.");
+            Console.WriteLine($"Error: {ex.Message}");
+        }
     }
     if (userInput == "2")
     {
-        Console.Write("What is the name of the dog leash you would like to view? ");
-        var dogLeashName = Console.ReadLine();
-        var dogLeash = productLogic.GetDogLeashByName(dogLeashName);
+        Console.Write("What is the name of the product you would like to view? ");
+        var productName = Console.ReadLine();
+
+        // Generic method to get any product, e.g., DogLeash
+        var dogLeash = productLogic?.GetProductByName<DogLeash>(productName ?? "Unknown");
+
         Console.WriteLine(JsonSerializer.Serialize(dogLeash));
         Console.WriteLine();
     }
     if (userInput == "3")
     {
         Console.WriteLine("The following products are in stock: ");
-        var inStock = productLogic.GetOnlyInStockProducts();
-        foreach (var item in inStock)
+        var inStock = productLogic?.GetOnlyInStockProducts();
+        foreach (var item in inStock ?? new List<string>())
         {
             Console.WriteLine(item);
         }
@@ -61,7 +76,7 @@ while (userInput.ToLower() != "exit")
     }
     if (userInput == "4")
     {
-        Console.WriteLine($"The total price of inventory on hand is {productLogic.GetTotalPriceOfInventory()}");
+        Console.WriteLine($"The total price of inventory on hand is {productLogic?.GetTotalPriceOfInventory():C}");
         Console.WriteLine();
     }
 
@@ -70,9 +85,9 @@ while (userInput.ToLower() != "exit")
 
 static string DisplayMenuAndGetInput()
 {
-    Console.WriteLine("Press 1 to add a product");
-    Console.WriteLine("Press 2 to view a Dog Leash Product");
-    Console.WriteLine("Press 3 to view in stock products");
+    Console.WriteLine("Press 1 to add a product (input as JSON)");
+    Console.WriteLine("Press 2 to view a product by name");
+    Console.WriteLine("Press 3 to view in-stock products");
     Console.WriteLine("Press 4 to view the total price of current inventory");
     Console.WriteLine("Type 'exit' to quit");
 

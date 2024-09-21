@@ -1,18 +1,13 @@
-﻿using PetStore.Logic;
-using PetStore.Models;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using PetStore.Models;
 
-namespace PetStore
+namespace PetStore.Logic
 {
-    internal class ProductLogic : IProductLogic
+    public class ProductLogic : IProductLogic
     {
-        private List<Product> _products;
-        private Dictionary<string, DogLeash> _dogLeash;
-        private Dictionary<string, CatFood> _catFood;
+        public List<Product> _products;
 
         public ProductLogic()
         {
@@ -32,7 +27,7 @@ namespace PetStore
                     Quantity = 6,
                     Price = 25.59m,
                     Name = "Plain 'Ol Cat Food",
-                    Description = "Nothing fancy to find here.  Just the basic stuff your cat needs to live a healthy life",
+                    Description = "Basic cat food for a healthy life",
                     WeightPounds = 10,
                     KittenFood = false
                 },
@@ -41,24 +36,14 @@ namespace PetStore
                     Quantity = 48,
                     Price = 12.99m,
                     Name = "Fancy Cat Food",
-                    Description = "Food that isn't only delicious, but made from the finest of all cat food stuff",
+                    Description = "Food that is delicious and made from fine ingredients",
                     KittenFood = false
                 }
             };
-            _dogLeash = new Dictionary<string, DogLeash>();
-            _catFood = new Dictionary<string, CatFood>();
         }
 
         public void AddProduct(Product product)
         {
-            if (product is DogLeash)
-            {
-                _dogLeash.Add(product.Name, product as DogLeash);
-            }
-            if (product is CatFood)
-            {
-                _catFood.Add(product.Name, product as CatFood);
-            }
             _products.Add(product);
         }
 
@@ -67,26 +52,19 @@ namespace PetStore
             return _products;
         }
 
-        public DogLeash GetDogLeashByName(string name)
+        public T GetProductByName<T>(string name) where T : Product
         {
-            try
-            {
-                return _dogLeash[name];
-            }
-            catch (Exception)
-            {
-                return null;
-            }
+            return _products.OfType<T>().FirstOrDefault(x => x.Name == name);
         }
 
         public List<string> GetOnlyInStockProducts()
         {
-            return _products.InStock().Select(x=>x.Name).ToList();
+            return _products.Where(p => p.Quantity > 0).Select(p => p.Name).ToList();
         }
 
         public decimal GetTotalPriceOfInventory()
         {
-            return _products.InStock().Select(x => x.Price).Sum();
+            return _products.Where(p => p.Quantity > 0).Sum(p => p.Price * p.Quantity);
         }
     }
 }
